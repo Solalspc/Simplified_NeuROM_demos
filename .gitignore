@@ -7,4 +7,8 @@ Results/*
 .gitlab-ci.yml
 /.quarto/
 public/*
+.venv/
+.uv/
+__pycache__/
+*.pyc
 
