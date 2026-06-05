@@ -128,7 +128,7 @@ def plot_node_displacement(model, nodes_u_ref, width=750, height=350):
 # 3. Spatial modes
 # ---------------------------------------------------------------------------
 
-def plot_modes(model, n_points=200, width=700, height=400):
+def plot_modes(model, n_points=200, width=700, height=400, domain = 'spatial'):
     """
     Plot each spatial mode u_i(x) over its own coordinate range.
 
@@ -144,29 +144,56 @@ def plot_modes(model, n_points=200, width=700, height=400):
     model.eval()
     fig = go.Figure()
 
-    with torch.no_grad():
-        for i in range(model.current_index):
-            coords = model.u_modes[i].get_coordinates().reshape(-1)
-            # linspace lives on the same device as the mode's coordinates
-            x_plot = torch.linspace(coords.min(), coords.max(), n_points,
-                                    device=coords.device)
-            u_plot = model.u_modes[i](x_plot).reshape(-1)
-            fig.add_trace(go.Scatter(
-                x=x_plot.cpu().numpy(),
-                y=u_plot.cpu().numpy(),
-                mode="lines",
-                name=f"Mode {i + 1}",
-            ))
+    if domain == 'spatial':
+        with torch.no_grad():
+            for i in range(model.current_index):
+                coords = model.u_modes[i].get_coordinates().reshape(-1)
+                # linspace lives on the same device as the mode's coordinates
+                x_plot = torch.linspace(coords.min(), coords.max(), n_points,
+                                        device=coords.device)
+                u_plot = model.u_modes[i](x_plot).reshape(-1)
+                fig.add_trace(go.Scatter(
+                    x=x_plot.cpu().numpy(),
+                    y=u_plot.cpu().numpy(),
+                    mode="lines",
+                    name=f"Mode {i + 1}",
+                ))
 
-    fig.update_layout(
-        title="PGD spatial modes",
-        xaxis_title="x",
-        yaxis_title="u",
-        legend_title="Modes",
-        width=width,
-        height=height,
-        plot_bgcolor="rgba(0,0,0,0)",
-    )
+        fig.update_layout(
+            title="PGD spatial modes",
+            xaxis_title="x",
+            yaxis_title="u",
+            legend_title="Modes",
+            width=width,
+            height=height,
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+    
+    if domain == 'parametric':
+        with torch.no_grad():
+            for i in range(model.current_index):
+                coords = model.E_modes[i].get_coordinates().reshape(-1)
+                # linspace lives on the same device as the mode's coordinates
+                x_plot = torch.linspace(coords.min(), coords.max(), n_points,
+                                        device=coords.device)
+                u_plot = model.E_modes[i](x_plot).reshape(-1)
+                fig.add_trace(go.Scatter(
+                    x=x_plot.cpu().numpy(),
+                    y=u_plot.cpu().numpy(),
+                    mode="lines",
+                    name=f"Mode {i + 1}",
+                ))
+
+        fig.update_layout(
+            title="PGD parametric modes",
+            xaxis_title="E",
+            yaxis_title="$\lambda$",
+            legend_title="Modes",
+            width=width,
+            height=height,
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+        
     fig.show()
     model.train()
 
@@ -352,7 +379,7 @@ def plot_midpoint_vs_E(model, x_mid=3.14, E_range=(1e2, 1e3), n_E=100,
         x=E_np,
         y=y_pgd,
         mode="markers",
-        name="PGD model",
+        name="PGD model (using piecewise linear interpolation) ",
     ))
     fig.add_trace(go.Scatter(
         x=E_np,
